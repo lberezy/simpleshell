@@ -128,9 +128,6 @@ int main(int argc, char const *argv[])
 				} else if (strcmp(tokens[0], "ps1") == 0) {
 					puts("Changing PS1");
 					strcpy(ps1, tokens[1]);
-				} else if (strcmp(tokens[0], "exit") == 0) {
-					puts("Exiting...");
-					exit(EXIT_SUCCESS);
 				}
 			}
 
@@ -146,6 +143,11 @@ int main(int argc, char const *argv[])
 		} else {
 			/* child process */
 			if(tokens[0]) {
+				if (strcmp(tokens[0], "exit") == 0) {
+					puts("Exiting...");
+					kill(getppid(), SIGTERM);
+					kill(pid, SIGTERM);
+				}
 				execvp(tokens[0], tokens);
 				/* execution only reaches this point if exec fails */
 				printf("Command not found: %.*s\n", BUFFER_LEN, line_buffer);
