@@ -9,7 +9,7 @@
 
 #define DEBUG 0
 
-#define PS1 "\x1b[32mshell~>\x1b[0m"
+#define PS "\x1b[32mshell~>\x1b[0m" /* default prompt statement */
 #define BUFFER_LEN 256
 
 
@@ -77,7 +77,7 @@ int main(int argc, char const *argv[])
 {
 
 	/* everything here happens only once */
-	char* ps1;
+	char* ps;
 	char *line_buffer = malloc(sizeof(line_buffer) * BUFFER_LEN);
 	size_t buffer_len = BUFFER_LEN;
 	//char line_buffer[BUFFER_LEN];
@@ -89,12 +89,12 @@ int main(int argc, char const *argv[])
 	char** tokens;
 	double time_spent;
 	/* setup prompt string */
-	ps1 = malloc(strlen(PS1) * sizeof (char) + 1);
-	strncpy(ps1, PS1, BUFFER_LEN);
+	ps = malloc(strlen(PS) * sizeof (char) + 1);
+	strncpy(ps, PS, BUFFER_LEN);
 	signal(SIGINT, SIG_IGN);
 
 	while(1) {
-		printf("%-.30s ", ps1); /* print prompt */
+		printf("%-.30s ", ps); /* print prompt */
 		getline(&line_buffer, &buffer_len, stdin);
 		//fgets(line_buffer, BUFFER_LEN, stdin); /* get user input */
 		line_buffer[strlen(line_buffer) - 1] = '\0'; /* drop newline */
@@ -109,14 +109,15 @@ int main(int argc, char const *argv[])
 			if (tokens[0]) {
 				if (strcmp(tokens[0], "cd") == 0) {
 					chdir(tokens[1]);
-				} else if (strcmp(tokens[0], "ps1") == 0) {
+				} else if (strcmp(tokens[0], "ps") == 0) {
 					if (tokens[1] && strlen(tokens[1]) > 0) {
-						puts("Changing PS1");
+
 						if (strcmp(tokens[1], "default") == 0) {
-							strcpy(ps1, PS1);
+							strcpy(ps, PS);
 						} else {
-							strcpy(ps1, tokens[1]);
+							strcpy(ps, tokens[1]);
 						}
+						puts("Prompt statement changed.");
 					} else {
 						puts("Invalid string");
 					}
