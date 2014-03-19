@@ -7,7 +7,7 @@
 #include <regex.h>
 #include <libc.h>
 
-#define DEBUG 0
+#define DEBUG 1
 
 #define PS1 "\x1b[32mshell~>\x1b[0m"
 #define BUFFER_LEN 256
@@ -96,7 +96,7 @@ int main(int argc, char const *argv[])
 
 	/* everything here happens only once */
 	char* ps1;
-	char line_buffer[BUFFER_LEN];
+	char line_buffer[256];
 	//char cmd_buffer[BUFFER_LEN];
 	//char args_buffer[BUFFER_LEN];
 	//int i = 1;
@@ -110,48 +110,42 @@ int main(int argc, char const *argv[])
 	signal(SIGINT, SIG_IGN);
 
 	while(1) {
-
+		printf("%-.30s ", ps1); /* print prompt */
+		fgets(line_buffer, BUFFER_LEN, stdin); /* get user input */
+		//getline(&line_buffer, NULL, stdin);
+		line_buffer[strlen(line_buffer) - 1] = '\0'; /* drop newline */
+		tokens = tokenizer(line_buffer); /* tokenize input */
+		begin = clock();
 		if ((pid = fork()) < 0) {
 			perror("Fork failed!");
 		};
 		/* continue execution after fork */
 		if (pid) {
+			/* do shell builtin stuff here */
+			if (tokens[0]) {
+				if (strcmp(tokens[0], "cd") == 0) {
+					chdir(tokens[1]);
+				} else if (strcmp(tokens[0], "ps1") == 0) {
+					puts("Changing PS1");
+					strcpy(ps1, tokens[1]);
+				} else if (strcmp(tokens[0], "exit") == 0) {
+					puts("Exiting...");
+					exit(EXIT_SUCCESS);
+				}
+			}
+
 			/* parent process wait for children, then regains control */
 			wait(NULL);
+
 			end = clock();
 			time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 			if (DEBUG) {
-				printf("Time Spent: %f seconds\n", time_spent);
+				printf("Fork time: %f seconds\n", time_spent);
 			}
+			continue;
 		} else {
 			/* child process */
-
-			printf("%-.30s ", ps1); /* print prompt */
-			fgets(line_buffer, BUFFER_LEN, stdin); /* get user input */
-			line_buffer[strlen(line_buffer) - 1] = '\0'; /* drop newline */
-			tokens = tokenizer(line_buffer); /* tokenize input */
-			/* while (tokens[i]) {
-				printf("arg(%d): %s\n", i, tokens[i]);
-				strcat(args_buffer, tokens[i++]);
-			} */
 			if(tokens[0]) {
-				if (strcmp(tokens[0], "exit") == 0) {
-					puts("Exiting...");
-					fflush(stdout);
-					/* kill parent */
-					kill(getppid(), SIGTERM);
-					//kill(getpid(), SIGTERM);
-					exit(0);
-				} else if (strcmp(tokens[0], "cd") == 0) {
-					/* this is broken, needs to be done in parent process */
-					puts("cd doesn't work!");
-					chdir(tokens[1]);
-					kill(getppid(), 99);
-				} else if (!strcmp(tokens[0], "ps1") && tokens[1]) {
-					/* this is broken, needs to be done in parent process */
-					puts("Changing PS1");
-					strcpy(ps1, tokens[1]);
-				} else {
 				execvp(tokens[0], tokens);
 				/* execution only reaches this point if exec fails */
 				printf("Command not found: %.*s\n", BUFFER_LEN, line_buffer);
@@ -160,6 +154,8 @@ int main(int argc, char const *argv[])
 			/* done with child, time to exit */
 			_exit(0);
 		}
+		return EXIT_SUCCESS;
 	}
-	return EXIT_SUCCESS;
+void execute(char** tokens) {
+
 }
