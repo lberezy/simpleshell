@@ -7,7 +7,7 @@
 #include <regex.h>
 #include <libc.h>
 
-
+#define DEBUG 0
 
 #define PS1 "\x1b[32mshell~>\x1b[0m"
 #define BUFFER_LEN 256
@@ -107,9 +107,9 @@ int main(int argc, char const *argv[])
 	/* setup prompt string */
 	ps1 = malloc(strlen(PS1) * sizeof (char) + 1);
 	strncpy(ps1, PS1, BUFFER_LEN);
+	signal(SIGINT, SIG_IGN);
 
 	while(1) {
-		printf("pre PID = %d, PPID = %d\n", getpid(), getppid());
 
 		if ((pid = fork()) < 0) {
 			perror("Fork failed!");
@@ -120,7 +120,9 @@ int main(int argc, char const *argv[])
 			wait(NULL);
 			end = clock();
 			time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-			printf("Time Spent: %f seconds\n", time_spent);
+			if (DEBUG) {
+				printf("Time Spent: %f seconds\n", time_spent);
+			}
 		} else {
 			/* child process */
 
@@ -141,10 +143,12 @@ int main(int argc, char const *argv[])
 					//kill(getpid(), SIGTERM);
 					exit(0);
 				} else if (strcmp(tokens[0], "cd") == 0) {
+					/* this is broken, needs to be done in parent process */
 					puts("cd doesn't work!");
 					chdir(tokens[1]);
 					kill(getppid(), 99);
 				} else if (!strcmp(tokens[0], "ps1") && tokens[1]) {
+					/* this is broken, needs to be done in parent process */
 					puts("Changing PS1");
 					strcpy(ps1, tokens[1]);
 				} else {
