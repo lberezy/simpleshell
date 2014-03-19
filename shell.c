@@ -7,7 +7,7 @@
 #include <regex.h>
 #include <libc.h>
 
-#define DEBUG 1
+#define DEBUG 0
 
 #define PS1 "\x1b[32mshell~>\x1b[0m"
 #define BUFFER_LEN 256
@@ -72,31 +72,15 @@ int m_strcpy_slice(char *dst, char *src, int n) {
   return 0;
 }
 
-void sigintHandler(int sig_num)
-{
-    /* Reset handler to catch SIGINT next time.
-       Refer http://en.cppreference.com/w/c/program/signal */
-    signal(SIGINT, sigintHandler);
-    fflush(stdout);
-}
-
-void cdHandler(int sig_num)
-{
-    /* Reset handler to catch SIGINT next time.
-       Refer http://en.cppreference.com/w/c/program/signal */
-    signal(99, cdHandler);
-    puts("CD!");
-    fflush(stdout);
-    //execlp(tokens[0], tokens[0], tokens[1], NULL);
-    //chdir(tokens[1]);
-}
 
 int main(int argc, char const *argv[])
 {
 
 	/* everything here happens only once */
 	char* ps1;
-	char line_buffer[256];
+	char *line_buffer = malloc(sizeof(line_buffer) * BUFFER_LEN);
+	size_t buffer_len = BUFFER_LEN;
+	//char line_buffer[BUFFER_LEN];
 	//char cmd_buffer[BUFFER_LEN];
 	//char args_buffer[BUFFER_LEN];
 	//int i = 1;
@@ -111,8 +95,8 @@ int main(int argc, char const *argv[])
 
 	while(1) {
 		printf("%-.30s ", ps1); /* print prompt */
-		fgets(line_buffer, BUFFER_LEN, stdin); /* get user input */
-		//getline(&line_buffer, NULL, stdin);
+		getline(&line_buffer, &buffer_len, stdin);
+		//fgets(line_buffer, BUFFER_LEN, stdin); /* get user input */
 		line_buffer[strlen(line_buffer) - 1] = '\0'; /* drop newline */
 		tokens = tokenizer(line_buffer); /* tokenize input */
 		begin = clock();
@@ -126,8 +110,16 @@ int main(int argc, char const *argv[])
 				if (strcmp(tokens[0], "cd") == 0) {
 					chdir(tokens[1]);
 				} else if (strcmp(tokens[0], "ps1") == 0) {
-					puts("Changing PS1");
-					strcpy(ps1, tokens[1]);
+					if (tokens[1] && strlen(tokens[1]) > 0) {
+						puts("Changing PS1");
+						if (strcmp(tokens[1], "default") == 0) {
+							strcpy(ps1, PS1);
+						} else {
+							strcpy(ps1, tokens[1]);
+						}
+					} else {
+						puts("Invalid string");
+					}
 				}
 			}
 
@@ -158,6 +150,3 @@ int main(int argc, char const *argv[])
 		}
 		return EXIT_SUCCESS;
 	}
-void execute(char** tokens) {
-
-}
