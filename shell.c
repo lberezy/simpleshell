@@ -109,7 +109,7 @@ int main(int argc, char const *argv[])
 			if (tokens[0]) {
 				if (strcmp(tokens[0], "cd") == 0) {
 					chdir(tokens[1]);
-				} else if (strcmp(tokens[0], "ps") == 0) {
+				} else if (strcmp(tokens[0], ":setps") == 0) {
 					if (tokens[1] && strlen(tokens[1]) > 0) {
 
 						if (strcmp(tokens[1], "default") == 0) {
